@@ -1,0 +1,134 @@
+.error-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border-radius: 4px;
+  background: rgba(244, 67, 54, 0.1);
+  color: var(--vr-danger);
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.category-filter {
+  flex: 0 1 240px;
+  min-width: 180px;
+}
+
+.category-filter-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--vr-danger);
+  font-size: 12px;
+}
+
+.filter-actions a[mat-mini-fab] {
+  border-radius: 8px !important;
+}
+
+:host ::ng-deep .mat-mdc-row {
+  cursor: default;
+}
+
+:host ::ng-deep .vr-table .mat-mdc-cell,
+:host ::ng-deep .vr-table .mat-mdc-header-cell {
+  border-bottom: 1px solid var(--vr-border) !important;
+}
+
+:host ::ng-deep .vr-table .mat-mdc-row:last-child .mat-mdc-cell {
+  border-bottom: none !important;
+}
+
+.vr-sort-label {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+:host ::ng-deep .mat-sort-header-container {
+  display: inline-flex;
+  align-items: center;
+}
+
+:host ::ng-deep .mat-sort-header-arrow {
+  width: 16px;
+  height: 16px;
+  color: var(--vr-text);
+}
+
+:host ::ng-deep .mat-sort-header-descending .mat-sort-header-arrow {
+  transform: none;
+}
+
+:host ::ng-deep .mat-sort-header-arrow [matSortHeaderIcon].vr-sort-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  line-height: 16px;
+  margin: 0;
+  position: relative;
+  top: auto;
+  left: auto;
+  display: block;
+  overflow: hidden;
+}
+
+.vr-role-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.vr-role-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 160px;
+}
+
+.vr-role-breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.3;
+}
+
+.vr-role-breakdown-row .vr-status {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 2px 6px;
+}
+
+.vr-status.admin {
+  color: var(--vr-status-green);
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.vr-status.user {
+  color: var(--vr-status-cyan);
+  background: rgba(0, 188, 212, 0.1);
+}
+
+.vr-status.seller {
+  color: #e65100;
+  background: rgba(230, 81, 0, 0.1);
+}
+
+.vr-status.default {
+  color: var(--vr-text-muted, #64748b);
+  background: rgba(100, 116, 139, 0.12);
+}
+
+.vr-status.default {
+  color: var(--vr-text-secondary);
+  background: rgba(95, 99, 104, 0.1);
+}

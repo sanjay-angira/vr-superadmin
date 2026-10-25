@@ -1,0 +1,676 @@
+/* Vrindavan Superadmin — Poseidon-like tokens (from vr-admin) */
+:root {
+  --vr-primary: #6366f1;
+  --vr-primary-rgb: 99, 102, 241;
+  --vr-primary-soft: rgba(99, 102, 241, 0.12);
+  --vr-accent: #ff4081;
+  --vr-page-bg: #f5f5f8;
+  --vr-card: #ffffff;
+  --vr-app-bar: #ebebee;
+  --vr-sidenav-bg: #0a1929;
+  --vr-sidenav-text: rgba(255, 255, 255, 0.8);
+  --vr-sidenav-text-active: #ffffff;
+  --vr-divider: rgba(82, 63, 105, 0.06);
+  --vr-toolbar-height: 64px;
+  --vr-sidenav-width: 280px;
+  --vr-radius: 0.5rem;
+  --vr-gutter: 1.25rem;
+  --vr-status-green: #4caf50;
+  --vr-status-red: #f44336;
+  --vr-status-cyan: #00bcd4;
+  --vr-status-orange: #ff9800;
+  --vr-text: #18181b;
+  --vr-text-muted: #9e9e9e;
+  --vr-text-secondary: #757575;
+  --vr-text-on-primary: #ffffff;
+  --vr-border: rgba(0, 0, 0, 0.12);
+  --vr-border-subtle: rgba(0, 0, 0, 0.06);
+  --vr-border-strong: #d1d5db;
+  --vr-border-title: #616161;
+  --vr-surface-muted: #ebebee;
+  --vr-surface-subtle: #f3f3f3;
+  --vr-surface-soft: #fafafa;
+  --vr-toolbar-bg: #ffffff;
+  --vr-header-band: rgba(99, 102, 241, 0.1);
+  --vr-dot: #bdbdbd;
+  --vr-step-text: #626a79;
+  --vr-step-line: #81818149;
+  --vr-input-bg: #ffffff;
+  --vr-danger: #f44336;
+  --vr-danger-text: #b91c1c;
+  --vr-danger-soft: #fef2f2;
+  --vr-danger-border: #fecaca;
+  --vr-overlay: rgba(0, 0, 0, 0.4);
+  --vr-chip-bg: #f4f4f5;
+  --vr-chip-primary-bg: #e0e7ff;
+  --vr-chip-primary-text: #4f46e5;
+  --vr-shadow: 0 1px 3px 0 rgba(82, 63, 104, 0.08);
+  --vr-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --vr-auth-a: #fafafa;
+  --vr-auth-b: #f4f4f5;
+  --vr-skeleton: #e4e4ea;
+  --vr-skeleton-shine: rgba(255, 255, 255, 0.72);
+}
+
+/* Comfortable dark: cool charcoal, not pure black */
+html[data-theme='dark'] {
+  --vr-primary: #8b91f7;
+  --vr-primary-rgb: 139, 145, 247;
+  --vr-primary-soft: rgba(139, 145, 247, 0.16);
+  --vr-page-bg: #12161d;
+  --vr-card: #1b212c;
+  --vr-app-bar: #1e2530;
+  --vr-sidenav-bg: #0c1017;
+  --vr-sidenav-text: rgba(230, 232, 238, 0.78);
+  --vr-sidenav-text-active: #f3f4f6;
+  --vr-divider: rgba(255, 255, 255, 0.08);
+  --vr-text: #e6e8ee;
+  --vr-text-muted: #9aa3b2;
+  --vr-text-secondary: #9aa3b2;
+  --vr-border: rgba(255, 255, 255, 0.1);
+  --vr-border-subtle: rgba(255, 255, 255, 0.06);
+  --vr-border-strong: rgba(255, 255, 255, 0.16);
+  --vr-border-title: rgba(255, 255, 255, 0.28);
+  --vr-surface-muted: #222936;
+  --vr-surface-subtle: #252d3b;
+  --vr-surface-soft: #1a2029;
+  --vr-toolbar-bg: #171c24;
+  --vr-header-band: rgba(139, 145, 247, 0.12);
+  --vr-dot: #6b7280;
+  --vr-step-text: #c4c9d4;
+  --vr-step-line: rgba(255, 255, 255, 0.16);
+  --vr-input-bg: #1b212c;
+  --vr-danger: #f87171;
+  --vr-danger-text: #fca5a5;
+  --vr-danger-soft: rgba(248, 113, 113, 0.12);
+  --vr-danger-border: rgba(248, 113, 113, 0.28);
+  --vr-overlay: rgba(0, 0, 0, 0.55);
+  --vr-chip-bg: #252d3b;
+  --vr-chip-primary-bg: rgba(139, 145, 247, 0.18);
+  --vr-chip-primary-text: #c7d2fe;
+  --vr-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.35);
+  --vr-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --vr-auth-a: #151a22;
+  --vr-auth-b: #1b212c;
+  --vr-skeleton: #2a3342;
+  --vr-skeleton-shine: rgba(255, 255, 255, 0.1);
+}
+
+/* Force Material primary toward indigo; keep drawers square like vr-admin */
+html {
+  --mat-sys-primary: var(--vr-primary);
+  --mat-sys-on-primary: var(--vr-text-on-primary);
+  --mat-sys-primary-container: var(--vr-primary-soft);
+  --mat-sys-secondary: var(--vr-primary);
+  --mat-sidenav-container-shape: 0px;
+  /* Match vr-admin (Material M2) table row dividers */
+  --mat-table-row-item-outline-color: var(--vr-border);
+  --mat-table-row-item-outline-width: 1px;
+  --mat-table-background-color: var(--vr-card);
+  --mat-table-header-headline-color: var(--vr-text);
+  --mat-table-row-item-label-text-color: var(--vr-text);
+}
+
+/* —— Shared page layout (list / form / dashboard) —— */
+.vr-page {
+  margin: calc(-1 * var(--vr-gutter));
+  min-height: calc(100vh - var(--vr-toolbar-height));
+}
+
+.vr-page-header-band {
+  /* Same padding on top / left / right (lavender gutter around title card) */
+  background-color: var(--vr-header-band);
+  padding: var(--vr-gutter);
+}
+
+/* List pages: filter bar sits flush at band bottom so table does not slide under it */
+.vr-page-header-band:has(.vr-filter-bar) {
+  padding-bottom: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.vr-title-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--vr-card);
+  padding: 1.25rem;
+  border-radius: 4px;
+  box-shadow: var(--vr-shadow);
+}
+
+.vr-title-card h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 500;
+  color: var(--vr-text);
+  padding-right: 14px;
+  border-right: 1px solid var(--vr-border-title);
+}
+
+.vr-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--vr-text-muted);
+  font-size: 13px;
+}
+
+.vr-breadcrumbs a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.vr-breadcrumbs a:hover {
+  color: var(--vr-primary);
+}
+
+.vr-breadcrumbs .dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--vr-dot);
+}
+
+.vr-title-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.vr-filter-bar {
+  position: relative;
+  z-index: 2;
+  margin-top: 1.25rem;
+  min-height: 64px;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 1.25rem;
+  background: var(--vr-surface-muted);
+  border-radius: 2px 2px 0 0;
+  overflow: hidden;
+}
+
+.vr-filter-bar .filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.vr-search-pill {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: 300px;
+  padding: 0 1rem;
+  background: var(--vr-input-bg);
+  border: 1px solid var(--vr-border-strong);
+  border-radius: 9999px;
+}
+
+.vr-search-pill input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--vr-text);
+  font: inherit;
+  font-size: 14px;
+  min-width: 0;
+  padding: 0.5rem 1rem;
+}
+
+.vr-search-pill mat-icon {
+  color: var(--vr-text-muted);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.vr-page-content {
+  padding:0 var(--vr-gutter) var(--vr-gutter);
+  margin-top: 0;
+}
+
+/* Joined table card sits directly under filter bar (no overlap into header) */
+.vr-page-content:has(.vr-card.joined) {
+  margin-top: 0;
+}
+
+.vr-card {
+  background: var(--vr-card);
+  border-radius: 4px;
+  box-shadow: var(--vr-shadow);
+  overflow: auto;
+}
+
+.vr-card.joined {
+  position: relative;
+  z-index: 1;
+  border-radius: 0 0 4px 4px;
+  box-shadow: var(--vr-shadow);
+  overflow: hidden;
+}
+
+.vr-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vr-status {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.vr-status.active {
+  color: var(--vr-status-green);
+  background: rgba(76, 175, 80, 0.1);
+}
+
+.vr-status.inactive {
+  color: var(--vr-danger);
+  background: var(--vr-danger-soft);
+}
+
+.vr-empty {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--vr-text-secondary);
+  text-align: center;
+}
+
+.vr-table {
+  width: 100%;
+  background: var(--vr-card);
+  --mat-table-row-item-outline-color: var(--vr-border);
+  --mat-table-row-item-outline-width: 1px;
+}
+
+.vr-table .mat-mdc-header-cell,
+.vr-table .mat-mdc-cell,
+.vr-table .mdc-data-table__header-cell,
+.vr-table .mdc-data-table__cell {
+  white-space: nowrap;
+  box-sizing: border-box;
+  font-size: 14px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--vr-border) !important;
+  vertical-align: middle;
+}
+
+.vr-table .mat-mdc-header-row,
+.vr-table .mdc-data-table__header-row {
+  height: 56px;
+  background: var(--vr-card);
+}
+
+.vr-table .mat-mdc-header-cell,
+.vr-table .mdc-data-table__header-cell {
+  font-weight: 500;
+  color: var(--vr-text);
+  letter-spacing: 0.0071428571em;
+  background-color: var(--vr-card) !important;
+}
+
+.vr-table .mat-sort-header-arrow,
+.vr-table .mat-mdc-sort-header-arrow {
+  color: var(--vr-text);
+}
+
+.vr-table .mat-mdc-cell,
+.vr-table .mdc-data-table__cell {
+  font-weight: 400;
+  color: var(--vr-text);
+}
+
+.vr-table .mat-mdc-row {
+  height: 52px;
+}
+
+/* Same as Material: no border under the last body row */
+.vr-table .mdc-data-table__row:last-child .mat-mdc-cell,
+.vr-table .mat-mdc-row:last-child .mat-mdc-cell {
+  border-bottom: none !important;
+}
+
+.vr-table + .mat-mdc-paginator,
+.vr-table-scroll + .mat-mdc-paginator,
+.vr-card > .mat-mdc-paginator {
+  border-top: 1px solid var(--vr-border);
+  background: var(--vr-card);
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .mat-mdc-paginator .mat-mdc-paginator-container {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+.vr-form-body {
+  padding: 1.5rem;
+}
+
+.vr-form-content {
+  padding: var(--vr-gutter) !important;
+  margin-top: 0 !important;
+  background: var(--vr-page-bg);
+}
+
+.vr-form-content > .vr-card.vr-form-body {
+  background: var(--vr-card);
+  /* single surface — no nested gray panels */
+  --mat-stepper-container-color: transparent;
+  --mat-sys-surface-container: var(--vr-card);
+  --mat-sys-surface-container-low: var(--vr-card);
+  --mat-sys-surface-container-lowest: var(--vr-card);
+}
+
+/* —— Forms (match vr-admin add/update cards) —— */
+.vr-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  align-items: start;
+  width: 100%;
+}
+
+.vr-form mat-form-field,
+.vr-form .mat-mdc-form-field,
+.vr-form app-image-upload,
+.vr-form app-multi-image-upload,
+.vr-form app-quill-editor,
+.vr-form app-permission-matrix {
+  width: 100%;
+  min-width: 0;
+}
+
+.vr-form .full,
+.vr-form .actions,
+.vr-form app-quill-editor,
+.vr-form app-multi-image-upload,
+.vr-form app-permission-matrix {
+  grid-column: 1 / -1;
+}
+
+.vr-form .actions {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+}
+
+.vr-form mat-slide-toggle,
+.vr-form mat-checkbox {
+  align-self: center;
+  min-height: 56px;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .vr-form {
+    grid-template-columns: 1fr;
+  }
+
+  .vr-form .full,
+  .vr-form .actions,
+  .vr-form app-quill-editor,
+  .vr-form app-multi-image-upload,
+  .vr-form app-image-upload,
+  .vr-form app-permission-matrix,
+  .vr-form mat-slide-toggle,
+  .vr-form mat-checkbox {
+    grid-column: 1 / -1;
+  }
+
+  .vr-form .actions {
+    flex-wrap: wrap;
+  }
+
+  .vr-form .actions a,
+  .vr-form .actions button {
+    flex: 1 1 auto;
+  }
+}
+
+/* Hide default Material subscript spacer like vr-admin */
+.vr-form .mat-mdc-form-field-subscript-wrapper,
+.vr-form-body .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* Shared image/file upload dropzone (floating label on dashed box) */
+.vr-upload {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.vr-upload-dropzone-wrap {
+  position: relative;
+}
+
+.vr-upload-label {
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  z-index: 1;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.4px;
+  color: var(--vr-text-secondary);
+  background: var(--vr-input-bg, var(--vr-card));
+  padding: 0 4px;
+  pointer-events: none;
+}
+
+/* Required asterisk — always red on Material labels and custom .req markers */
+.mat-mdc-form-field-required-marker,
+.mat-mdc-form-field-required-marker::after,
+.mdc-floating-label--required:not(.mdc-floating-label--hide-required-marker)::after,
+.req {
+  color: var(--vr-danger) !important;
+}
+
+.req {
+  margin-left: 2px;
+}
+
+.vr-upload-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 1rem 1.25rem;
+  border: 1px dashed var(--vr-primary);
+  border-radius: 4px;
+  background: var(--vr-primary-soft);
+  color: var(--vr-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.vr-upload-dropzone:hover:not(:disabled),
+.vr-upload-dropzone:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--vr-primary);
+}
+
+.vr-upload-dropzone:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.vr-upload-dropzone mat-icon {
+  color: var(--vr-primary);
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
+}
+
+.vr-form .tab,
+.vr-form.tab {
+  padding-top: 1.25rem;
+}
+
+.vr-form h3 {
+  margin: 0 0 1rem;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--vr-text);
+}
+
+/* Column visibility menu (CDK overlay — must be global) */
+.column-filter-menu {
+  min-width: 200px;
+}
+
+.column-filter-menu .column-filter-item {
+  display: block;
+  height: auto;
+  line-height: normal;
+  padding: 4px 16px;
+}
+
+.column-filter-menu .column-filter-checkbox .mdc-checkbox {
+  padding: 0;
+  margin-right: 6px;
+}
+
+html[data-theme='dark'] {
+  .ql-snow .ql-picker-options {
+    background-color: var(--vr-card);
+    border-color: var(--vr-border);
+    color: var(--vr-text);
+  }
+
+  .ql-snow .ql-tooltip {
+    background-color: var(--vr-card);
+    color: var(--vr-text);
+    border-color: var(--vr-border);
+    box-shadow: var(--vr-shadow-lg);
+  }
+
+  .ql-snow .ql-tooltip input[type='text'] {
+    background: var(--vr-input-bg);
+    color: var(--vr-text);
+    border-color: var(--vr-border-strong);
+  }
+}
+
+.vr-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.vr-skeleton {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: var(--vr-skeleton);
+  border-radius: 4px;
+}
+
+.vr-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--vr-skeleton-shine), transparent);
+  animation: vr-skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.vr-skeleton--icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.vr-skeleton--chevron {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.vr-skeleton--line {
+  height: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.vr-skeleton--stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.vr-skeleton--label {
+  width: 56px;
+  height: 10px;
+}
+
+.vr-skeleton--value {
+  width: 72px;
+  height: 18px;
+  margin-top: 8px;
+}
+
+.vr-skeleton--heading {
+  width: 140px;
+  height: 16px;
+}
+
+.vr-skeleton--btn {
+  width: 64px;
+  height: 14px;
+}
+
+@keyframes vr-skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vr-skeleton::after {
+    animation: none;
+  }
+}

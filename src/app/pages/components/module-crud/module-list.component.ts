@@ -1,0 +1,515 @@
+import { Component, inject, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { DatePipe } from '@angular/common';
+import { ApiService } from '../../../core/services/api.service';
+import {
+  getAdminModuleApiPath,
+  getAdminModuleSortColumn,
+  getAdminModuleTableConfig,
+  isAdminModuleKey,
+  type AdminModuleKey,
+} from '../../../../static-data/admin-module-table.config';
+import type { AdminTableColumnDefinition } from '../../../../static-data/static-common-table-columns';
+import { ConfirmationDialogComponent } from '../confirmation-dialog/confirmation-dialog.component';
+import { TableSkeletonComponent } from '../table-skeleton/table-skeleton.component';
+import {
+  FormOptionsService,
+  type SelectOption,
+} from '../forms/shared/form-options.service';
+
+@Component({
+  selector: 'app-module-list',
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    RouterLink,
+    DatePipe,
+    MatTableModule,
+    MatSortModule,
+    MatPaginatorModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    MatIconModule,
+    MatSnackBarModule,
+    TableSkeletonComponent,
+    MatDialogModule,
+    MatChipsModule,
+    MatTooltipModule,
+    MatMenuModule,
+    MatCheckboxModule,
+  ],
+  templateUrl: './module-list.component.html',
+  styleUrl: './module-list.component.scss',
+})
+export class ModuleListComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly api = inject(ApiService);
+  private readonly snack = inject(MatSnackBar);
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly options = inject(FormOptionsService);
+
+  readonly searchControl = new FormControl('', { nonNullable: true });
+  readonly loading = signal(true);
+  readonly error = signal('');
+  readonly categoryId = signal('');
+  readonly categoryOptions = signal<SelectOption[]>([]);
+  readonly categoryOptionsLoading = signal(false);
+  readonly categoryOptionsError = signal('');
+  readonly rows = signal<Record<string, unknown>[]>([]);
+  readonly count = signal(0);
+  readonly pageNumber = signal(1);
+  readonly pageSize = signal(10);
+  readonly sortingColumn = signal('id');
+  readonly sortingOrder = signal<'ASC' | 'DESC'>('DESC');
+
+  moduleKey!: AdminModuleKey;
+  apiPath = '';
+  label = '';
+  description = '';
+  addLabel = '';
+  displayedColumns: string[] = [];
+  /** All columns for the visibility menu (cloned so we do not mutate static config). */
+  columnOptions: AdminTableColumnDefinition[] = [];
+  /** Data columns that always have a MatTable def (visibility only affects display). */
+  dataColumns: AdminTableColumnDefinition[] = [];
+  supportsAdd = false;
+  supportsEdit = false;
+  supportsView = false;
+  supportsDelete = false;
+  private categoriesLoaded = false;
+
+  constructor() {
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const module = params.get('module') || '';
+      if (!isAdminModuleKey(module)) {
+        this.router.navigateByUrl('/admin/dashboard');
+        return;
+      }
+      const config = getAdminModuleTableConfig(module)!;
+      if (config.customRoute && module === 'website-layout') {
+        this.router.navigateByUrl('/admin/website-layout');
+        return;
+      }
+      this.moduleKey = module;
+      this.apiPath = getAdminModuleApiPath(module);
+      this.label = config.label;
+      this.description = config.description || '';
+      this.addLabel = config.addLabel || `Add ${config.label}`;
+      this.supportsAdd = config.actions.includes('add');
+      this.supportsEdit = config.actions.includes('edit');
+      this.supportsView = config.actions.includes('view');
+      this.supportsDelete = config.actions.includes('delete');
+      this.columnOptions = config.columns.map((column) => ({ ...column }));
+      this.dataColumns = this.columnOptions.filter((c) => c.datatype !== 'button');
+      this.syncDisplayedColumns();
+      this.categoryId.set(
+        this.moduleKey === 'products'
+          ? this.validCategoryId(this.route.snapshot.queryParamMap.get('categoryId'))
+          : ''
+      );
+      this.pageNumber.set(1);
+      this.sortingColumn.set(config.sortColumn ?? 'id');
+      this.sortingOrder.set('DESC');
+      if (this.moduleKey === 'products') this.loadCategoryOptions();
+      this.load();
+    });
+
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      if (this.moduleKey !== 'products') return;
+      const categoryId = this.validCategoryId(params.get('categoryId'));
+      if (categoryId === this.categoryId()) return;
+      this.categoryId.set(categoryId);
+      this.pageNumber.set(1);
+      this.load();
+    });
+
+    this.searchControl.valueChanges
+      .pipe(debounceTime(400), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.pageNumber.set(1);
+        this.load();
+      });
+  }
+
+  syncDisplayedColumns(): void {
+    const visible = this.columnOptions.filter((c) => c.visible);
+    const columns = visible.map((c) =>
+      c.datatype === 'button' ? 'actions' : c.property
+    );
+    const hasActionsDef = this.columnOptions.some((c) => c.datatype === 'button');
+    const actionsChecked = visible.some((c) => c.datatype === 'button');
+    const canShowActions =
+      this.supportsView || this.supportsEdit || this.supportsDelete;
+
+    if (canShowActions && (!hasActionsDef || actionsChecked)) {
+      if (!columns.includes('actions')) columns.push('actions');
+    } else {
+      const index = columns.indexOf('actions');
+      if (index >= 0) columns.splice(index, 1);
+    }
+
+    this.displayedColumns = columns;
+  }
+
+  skeletonHeaders(): string[] {
+    return this.displayedColumns.map((key) => {
+      if (key === 'actions') return 'Actions';
+      return this.columnOptions.find((column) => column.property === key)?.label ?? key;
+    });
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.error.set('');
+    const search = this.searchControl.value.trim();
+    this.api
+      .get(`/${this.apiPath}`, {
+        pageNumber: this.pageNumber(),
+        pageSize: this.pageSize(),
+        column: this.toApiSortColumn(this.sortingColumn()),
+        order: this.sortingOrder(),
+        ...(search ? { search } : {}),
+        ...(this.moduleKey === 'products' && this.categoryId()
+          ? { categoryId: this.categoryId() }
+          : {}),
+      })
+      .subscribe({
+        next: (res) => {
+          const rows = res?.data?.rows ?? res?.data ?? [];
+          this.rows.set(Array.isArray(rows) ? rows.map((row) => this.normalizeRow(row)) : []);
+          this.count.set(res?.data?.count ?? res?.count ?? 0);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set('Failed to load data. Please try again.');
+          this.rows.set([]);
+          this.count.set(0);
+          this.loading.set(false);
+        },
+      });
+  }
+
+  onCategoryChange(categoryId: string | number): void {
+    const nextCategoryId = this.validCategoryId(String(categoryId));
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { categoryId: nextCategoryId || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  loadCategoryOptions(): void {
+    if (this.categoriesLoaded || this.categoryOptionsLoading()) return;
+    this.categoryOptionsLoading.set(true);
+    this.categoryOptionsError.set('');
+    this.options
+      .categories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (options) => {
+          this.categoryOptions.set(
+            options.map((option) => ({
+              ...option,
+              value: String(option.value),
+            }))
+          );
+          this.categoriesLoaded = true;
+          this.categoryOptionsLoading.set(false);
+        },
+        error: () => {
+          this.categoryOptionsError.set('Could not load categories.');
+          this.categoryOptionsLoading.set(false);
+        },
+      });
+  }
+
+  onPage(event: PageEvent): void {
+    this.pageNumber.set(event.pageIndex + 1);
+    this.pageSize.set(event.pageSize);
+    this.load();
+  }
+
+  onSort(sort: Sort): void {
+    if (!sort.active || sort.active === 'actions') {
+      return;
+    }
+    this.sortingColumn.set(sort.active);
+    this.sortingOrder.set(sort.direction === 'asc' ? 'ASC' : 'DESC');
+    this.pageNumber.set(1);
+    this.load();
+  }
+
+  sortDirection(): 'asc' | 'desc' {
+    return this.sortingOrder() === 'ASC' ? 'asc' : 'desc';
+  }
+
+  cellValue(row: Record<string, unknown>, property: string, datatype: string): string {
+    if (datatype === 'name') {
+      return this.displayName(row) || '—';
+    }
+    if (datatype === 'role') {
+      const roles = this.roleNames(row);
+      return roles.length ? roles.join(', ') : '—';
+    }
+    const value = row[property];
+    if (datatype === 'status' || datatype === 'on-off') {
+      if (typeof value === 'boolean') return value ? 'Active' : 'Inactive';
+      if (value === 1 || value === '1' || value === 'active') return 'Active';
+      if (value === 0 || value === '0' || value === 'inactive') return 'Inactive';
+    }
+    if (datatype === 'date' || datatype === 'time') {
+      return value ? String(value) : '—';
+    }
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  }
+
+  roleNames(row: Record<string, unknown>): string[] {
+    const profiles = this.roleProfileRows(row);
+    if (profiles.length) {
+      return profiles.map((profile) => profile.roleName);
+    }
+
+    const userRoles = row['userRoles'];
+    if (Array.isArray(userRoles) && userRoles.length > 0) {
+      const fromRelations = userRoles
+        .map((userRole) => this.roleNameFromUnknown(userRole))
+        .filter((name): name is string => Boolean(name));
+      if (fromRelations.length) return [...new Set(fromRelations)];
+    }
+
+    const propertyValue = row['role'] ?? row['roles'] ?? row['roleName'];
+    if (Array.isArray(propertyValue)) {
+      return [
+        ...new Set(
+          propertyValue
+            .map((item) => this.roleNameFromUnknown(item))
+            .filter((name): name is string => Boolean(name)),
+        ),
+      ];
+    }
+    if (propertyValue && typeof propertyValue === 'object') {
+      const name = this.roleNameFromUnknown(propertyValue);
+      return name ? [name] : [];
+    }
+    if (typeof propertyValue === 'string' && propertyValue.trim()) {
+      return propertyValue
+        .split(',')
+        .map((name) => name.trim())
+        .filter(Boolean);
+    }
+    return ['Customer'];
+  }
+
+  showRoleBreakdown(row: Record<string, unknown>): boolean {
+    return this.moduleKey === 'users' && this.roleProfileRows(row).length > 0;
+  }
+
+  isRowDeleted(row: Record<string, unknown>): boolean {
+    const profiles = this.roleProfileRows(row);
+    if (profiles.length) {
+      return profiles.some((profile) => profile.isDeleted);
+    }
+    return Boolean(row['isDeleted'] ?? row['isDeleteRequested'] ?? false);
+  }
+
+  roleProfileRows(row: Record<string, unknown>): Array<{
+    roleId: string | number;
+    roleName: string;
+    displayName: string;
+    email: string;
+    isActive: boolean;
+    isDeleted: boolean;
+  }> {
+    const profiles = row['roleProfiles'];
+    if (!Array.isArray(profiles) || !profiles.length) {
+      const roleEmails = row['roleEmails'];
+      if (!Array.isArray(roleEmails) || !roleEmails.length) return [];
+      return roleEmails.map((item, index) => {
+        const record = (item && typeof item === 'object' ? item : {}) as Record<
+          string,
+          unknown
+        >;
+        const roleName = String(record['roleName'] ?? 'Role').trim() || 'Role';
+        return {
+          roleId: (record['roleId'] as string | number) ?? index,
+          roleName,
+          displayName: this.displayName(row) || '—',
+          email: String(record['email'] ?? '').trim(),
+          isActive:
+            record['isActive'] === undefined
+              ? row['isActive'] !== false
+              : Boolean(record['isActive']),
+          isDeleted: Boolean(
+            record['isDeleted'] ?? record['isDeleteRequested'] ?? false,
+          ),
+        };
+      });
+    }
+
+    return profiles.map((item, index) => {
+      const record = (item && typeof item === 'object' ? item : {}) as Record<
+        string,
+        unknown
+      >;
+      const roleName = String(record['roleName'] ?? 'Role').trim() || 'Role';
+      const firstName = String(record['firstName'] ?? '').trim();
+      const lastName = String(record['lastName'] ?? '').trim();
+      const displayName = `${firstName} ${lastName}`.trim() || '—';
+      return {
+        roleId: (record['roleId'] as string | number) ?? index,
+        roleName,
+        displayName,
+        email: String(record['email'] ?? '').trim(),
+        isActive:
+          record['isActive'] === undefined
+            ? row['isActive'] !== false
+            : Boolean(record['isActive']),
+        isDeleted: Boolean(
+          record['isDeleted'] ?? record['isDeleteRequested'] ?? false,
+        ),
+      };
+    });
+  }
+
+  roleChipClass(roleName: string): string {
+    const normalized = roleName.trim().toLowerCase();
+    if (normalized === 'admin') return 'admin';
+    if (normalized === 'user' || normalized === 'customer') return 'user';
+    if (normalized === 'seller') return 'seller';
+    return 'default';
+  }
+
+  private toApiSortColumn(property: string): string {
+    return getAdminModuleSortColumn(this.moduleKey, property);
+  }
+
+  private validCategoryId(value: string | null): string {
+    return value && /^\d+$/.test(value) && Number(value) > 0 ? value : '';
+  }
+
+  private displayName(row: Record<string, unknown>): string {
+    const firstName = String(row['firstName'] ?? '').trim();
+    const lastName = String(row['lastName'] ?? '').trim();
+    return `${firstName} ${lastName}`.trim() || String(row['name'] ?? '').trim();
+  }
+
+  private roleNameFromUnknown(value: unknown): string {
+    if (typeof value === 'string') return value.trim();
+    if (!value || typeof value !== 'object') return '';
+    const record = value as Record<string, unknown>;
+    const nested = record['role'];
+    const nestedRecord =
+      nested && typeof nested === 'object' ? (nested as Record<string, unknown>) : null;
+    return String(
+      record['roleName'] ??
+      nestedRecord?.['roleName'] ??
+      record['name'] ??
+      nestedRecord?.['name'] ??
+      '',
+    ).trim();
+  }
+
+  private normalizeRow(row: Record<string, unknown>): Record<string, unknown> {
+    const roles = this.roleNames(row);
+    const parent = row['parent'];
+    const parentRecord =
+      parent && typeof parent === 'object'
+        ? (parent as Record<string, unknown>)
+        : null;
+    const parentCategory =
+      row['parentCategory'] ??
+      parentRecord?.['categoryName'] ??
+      parentRecord?.['name'] ??
+      null;
+    const brand = row['brand'];
+    const brandRecord =
+      brand && typeof brand === 'object'
+        ? (brand as Record<string, unknown>)
+        : null;
+    const brandName =
+      row['brandName'] ?? brandRecord?.['name'] ?? brandRecord?.['brandName'] ?? null;
+    const attribute = row['attribute'];
+    const attributeRecord =
+      attribute && typeof attribute === 'object'
+        ? (attribute as Record<string, unknown>)
+        : null;
+    const attributeName =
+      row['attributeName'] ?? attributeRecord?.['name'] ?? null;
+    return {
+      ...row,
+      name: this.displayName(row) || row['name'],
+      role: roles.join(', '),
+      parentCategory,
+      attributeName,
+      brandName,
+    };
+  }
+
+  deleteRow(row: Record<string, unknown>): void {
+    const firstName = String(row['firstName'] ?? '').trim();
+    const lastName = String(row['lastName'] ?? '').trim();
+    const fullName = `${firstName} ${lastName}`.trim();
+    const label = String(
+      fullName ||
+      row['productName'] ||
+      row['name'] ||
+      row['title'] ||
+      row['categoryName'] ||
+      row['brandName'] ||
+      row['offerName'] ||
+      row['couponCode'] ||
+      row['question'] ||
+      row['value'] ||
+      row['orderNumber'] ||
+      row['id'] ||
+      '',
+    );
+    const ref = this.dialog.open(ConfirmationDialogComponent, {
+      data: {
+        title: 'Confirm delete',
+        message: label
+          ? `Are you sure you want to delete "${label}"? This cannot be undone.`
+          : `Delete this ${this.label.toLowerCase()} record?`,
+      },
+      width: '480px',
+      maxWidth: '90vw',
+      panelClass: 'vr-dialog',
+    });
+    ref.afterClosed().subscribe((ok) => {
+      if (!ok) return;
+      this.api.delete(`/${this.apiPath}/${row['id']}`).subscribe({
+        next: () => {
+          this.snack.open('Deleted', 'OK', { duration: 2500 });
+          if (this.rows().length === 1 && this.pageNumber() > 1) {
+            this.pageNumber.update((n) => n - 1);
+          }
+          this.load();
+        },
+        error: () => this.snack.open('Delete failed', 'Dismiss', { duration: 3500 }),
+      });
+    });
+  }
+}
